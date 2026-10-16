@@ -1,0 +1,7 @@
+line-length = 100
+target-version = "py312"
+exclude = [".venv", "staticfiles", "data"]
+
+[lint]
+select = ["E", "F", "I"]
+ignore = ["E501", "I001"]

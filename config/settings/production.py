@@ -1,0 +1,16 @@
+"""Production settings — tighten before any public deploy."""
+
+from .base import *  # noqa: F403
+from decouple import config
+
+DEBUG = False
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"
+
+# Set True behind HTTPS termination (Render/Railway/Fly)
+SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=False, cast=bool)

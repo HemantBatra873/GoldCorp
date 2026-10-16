@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Strategy lab · GoldCorp{% endblock %}
+{% block content %}
+<section class="gc-hero">
+  <h1>Strategy laboratory</h1>
+  <p class="mb-0">Sweep parameters without editing Python. Each combination becomes a queued experiment.</p>
+</section>
+<section class="gc-panel">
+  <form method="post" class="row g-3">
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="col-md-6">
+      <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+      {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+    </div>
+    {% endfor %}
+    <div class="col-12">
+      <button class="btn-gc" type="submit">Queue sweep</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

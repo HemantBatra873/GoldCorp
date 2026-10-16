@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Paper settings · GoldCorp{% endblock %}
+{% block content %}
+<section class="gc-hero">
+  <h1>Paper session settings</h1>
+  <p class="mb-0">
+    Use <strong>Simulated</strong> with no API keys, or <strong>Testnet</strong> with
+    <code>BINANCE_API_KEY</code> / <code>BINANCE_API_SECRET</code> in <code>.env</code>.
+  </p>
+</section>
+
+<section class="gc-panel">
+  <form method="post" class="row g-3">
+    {% csrf_token %}
+    {% for field in form %}
+      {% if field.name == "is_active" or field.name == "enable_trailing" %}
+        <div class="col-md-6 d-flex align-items-end">
+          <div class="form-check mb-2">
+            {{ field }}
+            <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          </div>
+        </div>
+      {% else %}
+        <div class="col-md-6">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+          {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+        </div>
+      {% endif %}
+    {% endfor %}
+    <div class="col-12 d-flex gap-2">
+      <button class="btn-gc" type="submit">Save</button>
+      <a class="btn-gc btn-gc-ghost" href="{% url 'paper:dashboard' %}">Back</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

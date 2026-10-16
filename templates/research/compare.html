@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Compare · GoldCorp{% endblock %}
+{% block content %}
+<section class="gc-hero">
+  <h1>Compare experiments</h1>
+  <p class="mb-0">Side-by-side metrics for reproducible research decisions.</p>
+</section>
+
+<section class="gc-panel mb-3">
+  <form method="get" class="row g-3 align-items-end">
+    <div class="col-md-8">
+      <label class="form-label" for="{{ form.run_ids.id_for_label }}">{{ form.run_ids.label }}</label>
+      {{ form.run_ids }}
+      {% if form.run_ids.help_text %}<div class="form-text">{{ form.run_ids.help_text }}</div>{% endif %}
+      {% if form.run_ids.errors %}<div class="text-danger small">{{ form.run_ids.errors }}</div>{% endif %}
+    </div>
+    <div class="col-md-4">
+      <button class="btn-gc" type="submit">Compare</button>
+    </div>
+  </form>
+</section>
+
+{% if rows %}
+<section class="gc-panel mb-3">
+  <div class="table-responsive">
+    <table class="gc-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Status</th>
+          <th>Strategy</th>
+          <th>Symbol</th>
+          <th>Trades</th>
+          <th>PnL</th>
+          <th>Max DD</th>
+          <th>Profit factor</th>
+          <th>Win rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td><a href="{% url 'research:run_detail' row.id %}">#{{ row.id }}</a></td>
+          <td><span class="gc-badge gc-badge-{{ row.status }}">{{ row.status }}</span></td>
+          <td>{{ row.strategy_id }}</td>
+          <td>{{ row.symbol }}</td>
+          <td>{{ row.total_trades }}</td>
+          <td>{{ row.total_pnl|floatformat:4 }}</td>
+          <td>{% if row.max_drawdown %}{{ row.max_drawdown|floatformat:4 }}{% else %}—{% endif %}</td>
+          <td>{% if row.profit_factor %}{{ row.profit_factor|floatformat:4 }}{% else %}—{% endif %}</td>
+          <td>{% if row.win_rate %}{{ row.win_rate|floatformat:4 }}{% else %}—{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="gc-grid gc-grid-2">
+  <div class="gc-panel">
+    <h2 class="h5">PnL by run</h2>
+    <div class="chart-wrap"><canvas id="pnlChart"></canvas></div>
+  </div>
+  <div class="gc-panel">
+    <h2 class="h5">Max drawdown by run</h2>
+    <div class="chart-wrap"><canvas id="ddBarChart"></canvas></div>
+  </div>
+</section>
+{% else %}
+<section class="gc-panel">
+  <div class="gc-empty">Enter at least two run ids to compare.</div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if rows %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+  const labels = {{ chart_labels_json|safe }};
+  const pnl = {{ chart_pnl_json|safe }};
+  const dd = {{ chart_dd_json|safe }};
+  new Chart(document.getElementById("pnlChart"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{ label: "PnL", data: pnl, backgroundColor: "#b45309" }],
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } },
+  });
+  new Chart(document.getElementById("ddBarChart"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{ label: "Max DD", data: dd, backgroundColor: "#b91c1c" }],
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } },
+  });
+</script>
+{% endif %}
+{% endblock %}

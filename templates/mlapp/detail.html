@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}ML #{{ model.id }} · GoldCorp{% endblock %}
+{% block content %}
+<section class="gc-hero">
+  <h1>{{ model.name }} <span class="gc-muted">#{{ model.id }}</span></h1>
+  <p class="mb-0">
+    <span class="gc-badge gc-badge-{% if model.status == 'ready' %}completed{% elif model.status == 'failed' %}failed{% else %}queued{% endif %}">{{ model.status }}</span>
+    · {{ model.symbol.symbol }} · {{ model.timeframe }}
+  </p>
+</section>
+{% if model.error_message %}
+<div class="gc-panel mb-3" style="border-color:#fecaca;"><strong>Error</strong><div>{{ model.error_message }}</div></div>
+{% endif %}
+<section class="gc-grid gc-grid-2 mb-3">
+  <div class="gc-panel">
+    <h2 class="h5">Metrics</h2>
+    <table class="gc-table">
+      <tr><th>Accuracy</th><td>{{ model.metrics.accuracy|default:"—" }}</td></tr>
+      <tr><th>F1</th><td>{{ model.metrics.f1|default:"—" }}</td></tr>
+      <tr><th>ROC AUC</th><td>{{ model.metrics.roc_auc|default:"—" }}</td></tr>
+      <tr><th>Artifact</th><td class="small"><code>{{ model.artifact_path|default:"—" }}</code></td></tr>
+    </table>
+  </div>
+  <div class="gc-panel">
+    <h2 class="h5">Feature importance</h2>
+    {% if model.feature_importance %}
+    <table class="gc-table">
+      {% for k,v in model.feature_importance.items %}
+      <tr><th>{{ k }}</th><td>{{ v|floatformat:4 }}</td></tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <div class="gc-empty">Not available yet.</div>
+    {% endif %}
+  </div>
+</section>
+<p class="gc-muted">Use this model from <a href="{% url 'research:run_create' %}">New experiment</a> with strategy <code>ml_classifier</code>.</p>
+{% endblock %}

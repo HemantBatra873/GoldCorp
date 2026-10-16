@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}Run #{{ run.id }} · GoldCorp{% endblock %}
+{% block content %}
+<section class="gc-hero d-flex flex-wrap justify-content-between align-items-start gap-3">
+  <div>
+    <h1>{{ run.name|default:run.strategy_id }} <span class="gc-muted">#{{ run.id }}</span></h1>
+    <p class="mb-2">
+      <span class="gc-badge gc-badge-{{ run.status }}">{{ run.status }}</span>
+      · {{ run.strategy_id }}@{{ run.strategy_version }}
+      · {% if run.symbol %}{{ run.symbol.symbol }}{% else %}—{% endif %}
+      · {{ run.timeframe }}
+    </p>
+    <p class="gc-muted mb-0 small">config_hash {{ run.config_hash|default:"—" }}</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn-gc btn-gc-ghost" href="{% url 'research:run_compare' %}?ids={{ run.id }}">Compare</a>
+    {% if run.status == "queued" or run.status == "running" %}
+    <form method="post" action="{% url 'research:run_cancel' run.id %}">
+      {% csrf_token %}
+      <button class="btn-gc btn-gc-ghost" type="submit">Cancel</button>
+    </form>
+    {% endif %}
+  </div>
+</section>
+
+{% if run.error_message %}
+<div class="gc-panel mb-3" style="border-color:#fecaca;">
+  <strong>Error</strong>
+  <div class="mt-1">{{ run.error_message }}</div>
+</div>
+{% endif %}
+
+<section class="gc-grid gc-grid-4 mb-3">
+  <div class="gc-panel">
+    <div class="gc-stat-label">PnL</div>
+    <div class="gc-stat-value">{{ run.total_pnl|floatformat:4 }}</div>
+  </div>
+  <div class="gc-panel">
+    <div class="gc-stat-label">Trades</div>
+    <div class="gc-stat-value">{{ run.total_trades }}</div>
+  </div>
+  <div class="gc-panel">
+    <div class="gc-stat-label">Win rate</div>
+    <div class="gc-stat-value">{% if run.win_rate %}{{ run.win_rate|floatformat:2 }}{% else %}—{% endif %}</div>
+  </div>
+  <div class="gc-panel">
+    <div class="gc-stat-label">Max drawdown</div>
+    <div class="gc-stat-value">{% if run.max_drawdown %}{{ run.max_drawdown|floatformat:4 }}{% else %}—{% endif %}</div>
+  </div>
+</section>
+
+<section class="gc-grid gc-grid-2 mb-3">
+  <div class="gc-panel">
+    <h2 class="h5">Equity curve</h2>
+    <div class="chart-wrap"><canvas id="equityChart"></canvas></div>
+  </div>
+  <div class="gc-panel">
+    <h2 class="h5">Drawdown %</h2>
+    <div class="chart-wrap"><canvas id="ddChart"></canvas></div>
+  </div>
+</section>
+
+<section class="gc-grid gc-grid-2 mb-3">
+  <div class="gc-panel">
+    <h2 class="h5">Risk analytics</h2>
+    <table class="gc-table">
+      <tr><th>Profit factor</th><td>{% if run.profit_factor %}{{ run.profit_factor|floatformat:4 }}{% elif run.metrics.profit_factor_infinite %}∞{% else %}—{% endif %}</td></tr>
+      <tr><th>Avg win</th><td>{% if avg_win %}{{ avg_win|floatformat:4 }}{% else %}—{% endif %}</td></tr>
+      <tr><th>Avg loss</th><td>{% if avg_loss %}{{ avg_loss|floatformat:4 }}{% else %}—{% endif %}</td></tr>
+      <tr><th>Total fees</th><td>{% if run.metrics.total_fees %}{{ run.metrics.total_fees|floatformat:4 }}{% else %}—{% endif %}</td></tr>
+      <tr><th>Expectancy</th><td>{% if run.metrics.expectancy %}{{ run.metrics.expectancy|floatformat:4 }}{% else %}—{% endif %}</td></tr>
+    </table>
+  </div>
+  <div class="gc-panel">
+    <h2 class="h5">Execution observability</h2>
+    <table class="gc-table">
+      <tr><th>Fill model</th><td>{{ run.config.fill_model|default:"signal_on_bar_close__fill_next_open" }}</td></tr>
+      <tr><th>Engine</th><td>{{ run.config.engine_version|default:"—" }}</td></tr>
+      <tr><th>Close mix</th>
+        <td>
+          {% if close_breakdown %}
+            {% for method, count in close_breakdown.items %}{{ method }}: {{ count }}{% if not forloop.last %}, {% endif %}{% endfor %}
+          {% else %}—
+          {% endif %}
+        </td>
+      </tr>
+      <tr><th>Data range</th>
+        <td>
+          {% if run.data_start %}{{ run.data_start|date:"Y-m-d H:i" }}{% else %}—{% endif %}
+          →
+          {% if run.data_end %}{{ run.data_end|date:"Y-m-d H:i" }}{% else %}—{% endif %}
+        </td>
+      </tr>
+      <tr><th>Request snapshot</th>
+        <td><code class="small">{{ request_config }}</code></td>
+      </tr>
+    </table>
+  </div>
+</section>
+
+<section class="gc-panel">
+  <h2 class="h5 mb-3">Trades</h2>
+  {% if trades %}
+  <div class="table-responsive">
+    <table class="gc-table">
+      <thead>
+        <tr>
+          <th>Side</th>
+          <th>Entry</th>
+          <th>Exit</th>
+          <th>PnL</th>
+          <th>Fee</th>
+          <th>Method</th>
+          <th>Reason</th>
+          <th>Exit time</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in trades %}
+        <tr>
+          <td>{{ t.side }}</td>
+          <td>{{ t.entry_price }}</td>
+          <td>{{ t.exit_price }}</td>
+          <td>{{ t.profit }}</td>
+          <td>{{ t.fee }}</td>
+          <td>{{ t.close_method }}</td>
+          <td class="small">{{ t.meta.signal_reason|default:"—" }}</td>
+          <td>{{ t.exit_time|date:"Y-m-d H:i" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="gc-empty">No trades recorded for this run yet.</div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+  const labels = {{ equity_labels_json|safe }};
+  const equity = {{ equity_values_json|safe }};
+  const drawdown = {{ drawdown_values_json|safe }};
+  const grid = { color: "rgba(231, 224, 213, 0.9)" };
+  if (document.getElementById("equityChart") && equity.length) {
+    new Chart(document.getElementById("equityChart"), {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "Equity",
+          data: equity,
+          borderColor: "#b45309",
+          backgroundColor: "rgba(180, 83, 9, 0.12)",
+          fill: true,
+          tension: 0.25,
+          pointRadius: 0,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { x: { ticks: { maxTicksLimit: 6 }, grid }, y: { grid } },
+        plugins: { legend: { display: false } },
+      },
+    });
+  }
+  if (document.getElementById("ddChart") && drawdown.length) {
+    new Chart(document.getElementById("ddChart"), {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "Drawdown %",
+          data: drawdown,
+          borderColor: "#b91c1c",
+          backgroundColor: "rgba(185, 28, 28, 0.1)",
+          fill: true,
+          tension: 0.25,
+          pointRadius: 0,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { x: { ticks: { maxTicksLimit: 6 }, grid }, y: { grid } },
+        plugins: { legend: { display: false } },
+      },
+    });
+  }
+</script>
+{% endblock %}

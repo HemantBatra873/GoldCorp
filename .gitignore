@@ -1,0 +1,56 @@
+# Secrets & env
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Django
+db.sqlite3
+*.log
+staticfiles/
+media/
+local_settings.py
+
+# Tests / tooling
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Docker volumes / local data
+postgres_data/
+data/ohlcv/*.csv
+!data/ohlcv/.gitkeep
+data/models/*.joblib
+!data/models/.gitkeep
+
+
+# Legacy reference tree (remove after Phase 2 extraction)
+# Keep tracked until deleted intentionally; ignore heavy artifacts inside it:
+Denarios/db.sqlite3
+Denarios/.env
+Denarios/venv/
+Denarios/**/__pycache__/
+Denarios/bots/simulations/samples/USDT*/
+Denarios/.idea/

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}New experiment · GoldCorp{% endblock %}
+{% block content %}
+<section class="gc-hero">
+  <h1>New experiment</h1>
+  <p class="mb-0">Configure parameters without editing Python. The job is queued on Celery.</p>
+</section>
+
+<section class="gc-panel">
+  <form method="post" class="row g-3">
+    {% csrf_token %}
+    {% for field in form %}
+      {% if field.name == "enable_trailing" %}
+        <div class="col-md-6 d-flex align-items-end">
+          <div class="form-check mb-2">
+            {{ field }}
+            <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          </div>
+        </div>
+      {% else %}
+        <div class="col-md-6">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+          {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+        </div>
+      {% endif %}
+    {% endfor %}
+    <div class="col-12 d-flex gap-2 mt-2">
+      <button class="btn-gc" type="submit">Queue backtest</button>
+      <a class="btn-gc btn-gc-ghost" href="{% url 'research:run_list' %}">Cancel</a>
+    </div>
+  </form>
+  <p class="gc-muted small mt-3 mb-0">
+    Requires OHLCV on disk (`download_klines`) and a running Celery worker for async completion.
+  </p>
+</section>
+{% endblock %}

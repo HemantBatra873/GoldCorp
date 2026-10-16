@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Train ML · GoldCorp{% endblock %}
+{% block content %}
+<section class="gc-hero">
+  <h1>Train direction model</h1>
+  <p class="mb-0">Chronological train/test split. Features are causal; labels use the next close only while training.</p>
+</section>
+<section class="gc-panel">
+  <form method="post" class="row g-3">
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="col-md-6">
+      <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+    </div>
+    {% endfor %}
+    <div class="col-12">
+      <button class="btn-gc" type="submit">Queue training</button>
+      <a class="btn-gc btn-gc-ghost" href="{% url 'mlapp:list' %}">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

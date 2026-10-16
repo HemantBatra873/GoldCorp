@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · GoldCorp{% endblock %}
+{% block content %}
+<section class="gc-hero d-flex flex-wrap justify-content-between align-items-end gap-3">
+  <div>
+    <h1>Research workbench</h1>
+    <p class="mb-0">Queue experiments, inspect risk, and compare strategy runs.</p>
+  </div>
+  <a class="btn-gc" href="{% url 'research:run_create' %}">New experiment</a>
+</section>
+
+<section class="gc-grid gc-grid-4 mb-4">
+  <div class="gc-panel">
+    <div class="gc-stat-label">Total runs</div>
+    <div class="gc-stat-value">{{ stats.total|default:0 }}</div>
+  </div>
+  <div class="gc-panel">
+    <div class="gc-stat-label">Completed</div>
+    <div class="gc-stat-value">{{ stats.completed|default:0 }}</div>
+  </div>
+  <div class="gc-panel">
+    <div class="gc-stat-label">In flight</div>
+    <div class="gc-stat-value">{{ stats.running|default:0 }}</div>
+  </div>
+  <div class="gc-panel">
+    <div class="gc-stat-label">Sum PnL</div>
+    <div class="gc-stat-value">{{ stats.pnl|default:0|floatformat:2 }}</div>
+  </div>
+</section>
+
+<section class="gc-panel">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h4 mb-0">Recent experiments</h2>
+    <a href="{% url 'research:run_list' %}">View all</a>
+  </div>
+  {% if recent_runs %}
+  <div class="table-responsive">
+    <table class="gc-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Strategy</th>
+          <th>Symbol</th>
+          <th>Status</th>
+          <th>PnL</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for run in recent_runs %}
+        <tr>
+          <td><a href="{% url 'research:run_detail' run.id %}">#{{ run.id }}</a></td>
+          <td>{{ run.name|default:"—" }}</td>
+          <td>{{ run.strategy_id }}</td>
+          <td>{% if run.symbol %}{{ run.symbol.symbol }}{% else %}—{% endif %}</td>
+          <td><span class="gc-badge gc-badge-{{ run.status }}">{{ run.status }}</span></td>
+          <td>{{ run.total_pnl|floatformat:4 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="gc-empty">No experiments yet. Queue your first backtest to populate this board.</div>
+  {% endif %}
+</section>
+{% endblock %}

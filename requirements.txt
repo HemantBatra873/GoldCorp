@@ -1,0 +1,25 @@
+# Web
+Django>=5.1,<5.3
+gunicorn==23.0.0
+whitenoise==6.8.2
+
+# Config / DB
+python-decouple==3.8
+dj-database-url==2.3.0
+psycopg2-binary==2.9.10
+
+# Jobs
+celery[redis]==5.4.0
+redis==5.2.1
+django-celery-beat==2.7.0
+django-celery-results==2.5.1
+
+# Data / quant (Phase 2+)
+pandas==2.2.3
+numpy==2.1.3
+ta==0.11.0
+requests==2.32.3
+
+# ML (Phase 6 — pinned early so the env is stable)
+scikit-learn==1.5.2
+joblib==1.4.2

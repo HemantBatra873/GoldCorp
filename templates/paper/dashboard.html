@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Paper trading · GoldCorp{% endblock %}
+{% block content %}
+<section class="gc-hero d-flex flex-wrap justify-content-between align-items-end gap-3">
+  <div>
+    <h1>Paper trading</h1>
+    <p class="mb-0">
+      Mode: <strong>{{ session.get_mode_display }}</strong>
+      · Strategy: {{ session.strategy_id }}
+      · Symbols: {{ session.symbols|join:", " }}
+    </p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a class="btn-gc btn-gc-ghost" href="{% url 'paper:settings' %}">Settings</a>
+    <form method="post" action="{% url 'paper:toggle' %}">{% csrf_token %}
+      <button class="btn-gc" type="submit">{% if session.is_active %}Pause{% else %}Activate{% endif %}</button>
+    </form>
+    <form method="post" action="{% url 'paper:run_once' %}">{% csrf_token %}
+      <button class="btn-gc btn-gc-ghost" type="submit">Run scan now</button>
+    </form>
+  </div>
+</section>
+
+{% if session.last_error %}
+<div class="gc-panel mb-3" style="border-color:#fecaca;">
+  <strong>Last error</strong>
+  <div class="mt-1">{{ session.last_error }}</div>
+</div>
+{% endif %}
+
+<section class="gc-grid gc-grid-4 mb-3">
+  <div class="gc-panel">
+    <div class="gc-stat-label">Status</div>
+    <div class="gc-stat-value" style="font-size:1.3rem;">
+      {% if session.is_active %}
+        <span class="gc-badge gc-badge-completed">active</span>
+      {% else %}
+        <span class="gc-badge gc-badge-cancelled">paused</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="gc-panel">
+    <div class="gc-stat-label">Open positions</div>
+    <div class="gc-stat-value">{{ open_positions|length }}</div>
+  </div>
+  <div class="gc-panel">
+    <div class="gc-stat-label">Last heartbeat</div>
+    <div class="gc-stat-value" style="font-size:1.1rem;">
+      {% if session.last_heartbeat_at %}{{ session.last_heartbeat_at|timesince }} ago{% else %}—{% endif %}
+    </div>
+  </div>
+  <div class="gc-panel">
+    <div class="gc-stat-label">Notional</div>
+    <div class="gc-stat-value" style="font-size:1.3rem;">{{ session.notional }} USDT</div>
+  </div>
+</section>
+
+<section class="gc-panel mb-3">
+  <h2 class="h5">Open positions</h2>
+  {% if open_positions %}
+  <div class="table-responsive">
+    <table class="gc-table">
+      <thead>
+        <tr>
+          <th>Symbol</th><th>Side</th><th>Entry</th><th>SL</th><th>TP</th><th>Opened</th><th>Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in open_positions %}
+        <tr>
+          <td>{{ p.symbol }}</td>
+          <td>{{ p.side }}</td>
+          <td>{{ p.entry_price }}</td>
+          <td>{{ p.sl_price }}</td>
+          <td>{{ p.tp_price }}</td>
+          <td>{{ p.opened_at|date:"Y-m-d H:i" }}</td>
+          <td class="small">{{ p.meta.signal_reason|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="gc-empty">No open paper positions.</div>
+  {% endif %}
+</section>
+
+<section class="gc-grid gc-grid-2">
+  <div class="gc-panel">
+    <h2 class="h5">Recent fills</h2>
+    {% if fills %}
+    <table class="gc-table">
+      <thead><tr><th>Symbol</th><th>Side</th><th>PnL</th><th>Method</th><th>When</th></tr></thead>
+      <tbody>
+        {% for f in fills %}
+        <tr>
+          <td>{{ f.symbol }}</td>
+          <td>{{ f.side }}</td>
+          <td>{{ f.profit }}</td>
+          <td>{{ f.close_method }}</td>
+          <td>{{ f.closed_at|date:"Y-m-d H:i" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="gc-empty">No fills yet.</div>
+    {% endif %}
+  </div>
+  <div class="gc-panel">
+    <h2 class="h5">Execution log</h2>
+    {% if events %}
+    <table class="gc-table">
+      <thead><tr><th>Level</th><th>Kind</th><th>Message</th><th>When</th></tr></thead>
+      <tbody>
+        {% for e in events %}
+        <tr>
+          <td>{{ e.level }}</td>
+          <td>{{ e.kind }}</td>
+          <td class="small">{{ e.message }}</td>
+          <td>{{ e.created_at|date:"H:i:s" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="gc-empty">No events yet. Activate and run a scan.</div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

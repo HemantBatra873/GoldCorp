@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}ML models · GoldCorp{% endblock %}
+{% block content %}
+<section class="gc-hero d-flex flex-wrap justify-content-between align-items-end gap-3">
+  <div>
+    <h1>ML models</h1>
+    <p class="mb-0">Train sklearn direction classifiers and use them as backtest strategies.</p>
+  </div>
+  <a class="btn-gc" href="{% url 'mlapp:train' %}">Train model</a>
+</section>
+<section class="gc-panel">
+  {% if models %}
+  <table class="gc-table">
+    <thead>
+      <tr><th>ID</th><th>Name</th><th>Symbol</th><th>Status</th><th>Accuracy</th><th>AUC</th></tr>
+    </thead>
+    <tbody>
+      {% for m in models %}
+      <tr>
+        <td><a href="{% url 'mlapp:detail' m.id %}">#{{ m.id }}</a></td>
+        <td>{{ m.name }}</td>
+        <td>{{ m.symbol.symbol }}</td>
+        <td><span class="gc-badge gc-badge-{% if m.status == 'ready' %}completed{% elif m.status == 'failed' %}failed{% else %}queued{% endif %}">{{ m.status }}</span></td>
+        <td>{% if m.metrics.accuracy %}{{ m.metrics.accuracy|floatformat:3 }}{% else %}—{% endif %}</td>
+        <td>{% if m.metrics.roc_auc %}{{ m.metrics.roc_auc|floatformat:3 }}{% else %}—{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="gc-empty">No models yet. Train one from local OHLCV data.</div>
+  {% endif %}
+</section>
+{% endblock %}
